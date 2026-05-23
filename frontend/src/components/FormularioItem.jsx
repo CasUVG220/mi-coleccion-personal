@@ -113,7 +113,7 @@ function FormularioItem({ onAgregar }) {
         </label>
       </div>
 
-      <button type="submit">➕ Agregar Sesión</button>
+      <button type="submit">Agregar Sesión</button>
     </form>
   );
 }

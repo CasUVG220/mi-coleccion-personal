@@ -29,7 +29,7 @@ function App() {
 
   return (
     <div style={{ maxWidth: 800, margin: "0 auto", padding: "2rem" }}>
-      <h1>🏋️ Mi Bitácora de Entrenamiento</h1>
+      <h1>Mi Bitácora de Entrenamiento</h1>
       <FormularioItem onAgregar={agregarSesion} />
       <ListaItems
         sesiones={sesiones}
