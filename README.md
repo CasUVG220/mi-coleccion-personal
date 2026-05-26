@@ -1,29 +1,32 @@
-# Mi Colección Personal — Bitácora de Entrenamiento 
+# Mi Colección Personal — Bitácora de Entrenamiento
 
 App full-stack para registrar y gestionar sesiones de entrenamiento físico personal.
 
 ## Stack Tecnológico
-- **Frontend:** React 18 + Vite, useState, useEffect, LocalStorage
+- **Frontend:** React 18 + Vite, useState, useEffect, useContext, useRef
 - **Backend:** Node.js + Express + SQLite (better-sqlite3)
-- **Estilos:** CSS inline (Fase 1)
+- **Persistencia:** LocalStorage (modo local) o API REST (modo API)
 
 ## Estructura del Proyecto
 mi-coleccion-personal/
-├── frontend/         # React 18 + Vite
+├── frontend/
 │   └── src/
 │       ├── components/
 │       │   ├── FormularioItem.jsx
 │       │   ├── ListaItems.jsx
 │       │   └── ItemCard.jsx
+│       ├── context/
+│       │   ├── StorageContext.jsx
+│       │   ├── ThemeContext.jsx
+│       │   └── UserContext.jsx
 │       ├── utils/
-│       │   └── storage.js
+│       │   ├── storage.js
+│       │   └── categorias.js
 │       └── App.jsx
-├── backend/          # Express + SQLite
+├── backend/
 │   └── src/
-│       ├── routes/
-│       │   └── items.js
-│       ├── db/
-│       │   └── database.js
+│       ├── routes/items.js
+│       ├── db/database.js
 │       └── index.js
 ├── .gitignore
 └── README.md
@@ -42,6 +45,16 @@ mi-coleccion-personal/
 | notas | string | Observaciones |
 | atributos | JSON | { duracion, series } |
 | activo | boolean | Si está activo |
+
+## Categorías
+
+| ID | Nombre | Color |
+|---|---|---|
+| fuerza | Fuerza | #e74c3c |
+| cardio | Cardio | #3498db |
+| hiit | HIIT | #f39c12 |
+| flexibilidad | Flexibilidad | #2ecc71 |
+| descanso | Descanso | #9b59b6 |
 
 ## Cómo Correr el Proyecto
 
@@ -72,14 +85,27 @@ node src/index.js
 | DELETE | /api/items/:id | Elimina una sesión |
 | POST | /api/items/:id/registro | Agrega un registro |
 
-## Mis Sesiones Registradas
+## Capturas
 
-![Captura de la app](Fase1.png)
+### Modo Claro
+![Modo Claro](Fase2Claro.png)
 
-## Fase 1 — Completada 
-- [x] useState con lazy initializer
-- [x] useEffect para sincronizar con LocalStorage
-- [x] CRUD completo en frontend
-- [x] API REST con Express
-- [x] Base de datos SQLite
-- [x] CORS configurado
+### Modo Oscuro
+![Modo Oscuro](Fase2Oscuro.png)
+
+## Fases Completadas
+
+### Fase 1 
+- useState con lazy initializer
+- useEffect para sincronizar con LocalStorage
+- CRUD completo en frontend
+- API REST con Express + SQLite
+- CORS configurado
+
+### Fase 2 
+- StorageContext — abstrae API vs LocalStorage
+- ThemeContext — claro/oscuro con variables CSS y atajo T
+- UserContext — nombre y preferencias persistidas
+- useRef #1 — focus en input tras agregar sesión
+- useRef #2 — setInterval para auto-refresh en modo API
+- 5 categorías con color hex en utils/categorias.js
