@@ -1,8 +1,7 @@
 // src/components/FormularioItem.jsx
 import { useState } from "react";
 import { v4 as uuidv4 } from "uuid";
-
-const CATEGORIAS = ["fuerza", "cardio", "flexibilidad", "hiit", "descanso"];
+import { CATEGORIAS } from "../utils/categorias";
 
 const estadoInicial = {
   nombre: "",
@@ -16,7 +15,7 @@ const estadoInicial = {
   activo: true,
 };
 
-function FormularioItem({ onAgregar }) {
+function FormularioItem({ onAgregar, inputRef }) {
   const [form, setForm] = useState(estadoInicial);
 
   function handleChange(e) {
@@ -50,70 +49,205 @@ function FormularioItem({ onAgregar }) {
   }
 
   return (
-    <form onSubmit={handleSubmit} style={{ marginBottom: "2rem" }}>
-      <h2>Nueva Sesión</h2>
+    <form onSubmit={handleSubmit} style={{
+      backgroundColor: "var(--bg-card)",
+      border: "1px solid var(--borde)",
+      borderRadius: 10,
+      padding: "1.5rem",
+      marginBottom: "2rem"
+    }}>
+      <h2 style={{ marginTop: 0, color: "var(--texto)" }}>Nueva Sesion</h2>
 
-      <div>
-        <label>Nombre de la sesión</label><br />
-        <input name="nombre" value={form.nombre} onChange={handleChange} required />
+      <div style={{ marginBottom: "1rem" }}>
+        <label style={{ color: "var(--texto-secundario)", fontSize: 13 }}>Nombre de la sesion</label><br />
+        <input
+          ref={inputRef}
+          name="nombre"
+          value={form.nombre}
+          onChange={handleChange}
+          required
+          placeholder="Ej: Dia de piernas"
+          style={{
+            width: "100%",
+            padding: "8px",
+            borderRadius: 6,
+            border: "1px solid var(--borde)",
+            backgroundColor: "var(--bg)",
+            color: "var(--texto)",
+            marginTop: 4
+          }}
+        />
       </div>
 
-      <div>
-        <label>Categoría</label><br />
-        <select name="categoriaId" value={form.categoriaId} onChange={handleChange}>
-          {CATEGORIAS.map((c) => (
-            <option key={c} value={c}>{c}</option>
-          ))}
-        </select>
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1rem", marginBottom: "1rem" }}>
+        <div>
+          <label style={{ color: "var(--texto-secundario)", fontSize: 13 }}>Categoria</label><br />
+          <select
+            name="categoriaId"
+            value={form.categoriaId}
+            onChange={handleChange}
+            style={{
+              width: "100%",
+              padding: "8px",
+              borderRadius: 6,
+              border: "1px solid var(--borde)",
+              backgroundColor: "var(--bg)",
+              color: "var(--texto)",
+              marginTop: 4
+            }}
+          >
+            {CATEGORIAS.map((c) => (
+              <option key={c.id} value={c.id}>{c.nombre}</option>
+            ))}
+          </select>
+        </div>
+
+        <div>
+          <label style={{ color: "var(--texto-secundario)", fontSize: 13 }}>Estado</label><br />
+          <select
+            name="estado"
+            value={form.estado}
+            onChange={handleChange}
+            style={{
+              width: "100%",
+              padding: "8px",
+              borderRadius: 6,
+              border: "1px solid var(--borde)",
+              backgroundColor: "var(--bg)",
+              color: "var(--texto)",
+              marginTop: 4
+            }}
+          >
+            <option value="pendiente">Pendiente</option>
+            <option value="completado">Completado</option>
+            <option value="cancelado">Cancelado</option>
+          </select>
+        </div>
       </div>
 
-      <div>
-        <label>Estado</label><br />
-        <select name="estado" value={form.estado} onChange={handleChange}>
-          <option value="pendiente">Pendiente</option>
-          <option value="completado">Completado</option>
-          <option value="cancelado">Cancelado</option>
-        </select>
+      <div style={{ marginBottom: "1rem" }}>
+        <label style={{ color: "var(--texto-secundario)", fontSize: 13 }}>
+          Puntuacion: {form.puntuacion}/10
+        </label><br />
+        <input
+          type="range"
+          name="puntuacion"
+          min="1"
+          max="10"
+          value={form.puntuacion}
+          onChange={handleChange}
+          style={{ width: "100%", marginTop: 4 }}
+        />
       </div>
 
-      <div>
-        <label>Puntuación ({form.puntuacion}/10)</label><br />
-        <input type="range" name="puntuacion" min="1" max="10"
-          value={form.puntuacion} onChange={handleChange} />
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1rem", marginBottom: "1rem" }}>
+        <div>
+          <label style={{ color: "var(--texto-secundario)", fontSize: 13 }}>Fecha de actividad</label><br />
+          <input
+            type="date"
+            name="fechaActividad"
+            value={form.fechaActividad}
+            onChange={handleChange}
+            style={{
+              width: "100%",
+              padding: "8px",
+              borderRadius: 6,
+              border: "1px solid var(--borde)",
+              backgroundColor: "var(--bg)",
+              color: "var(--texto)",
+              marginTop: 4
+            }}
+          />
+        </div>
+
+        <div>
+          <label style={{ color: "var(--texto-secundario)", fontSize: 13 }}>Duracion (min)</label><br />
+          <input
+            type="number"
+            name="duracion"
+            value={form.atributos.duracion}
+            onChange={handleAtributos}
+            style={{
+              width: "100%",
+              padding: "8px",
+              borderRadius: 6,
+              border: "1px solid var(--borde)",
+              backgroundColor: "var(--bg)",
+              color: "var(--texto)",
+              marginTop: 4
+            }}
+          />
+        </div>
       </div>
 
-      <div>
-        <label>Fecha de actividad</label><br />
-        <input type="date" name="fechaActividad"
-          value={form.fechaActividad} onChange={handleChange} />
+      <div style={{ marginBottom: "1rem" }}>
+        <label style={{ color: "var(--texto-secundario)", fontSize: 13 }}>Series</label><br />
+        <input
+          type="number"
+          name="series"
+          value={form.atributos.series}
+          onChange={handleAtributos}
+          style={{
+            width: "100%",
+            padding: "8px",
+            borderRadius: 6,
+            border: "1px solid var(--borde)",
+            backgroundColor: "var(--bg)",
+            color: "var(--texto)",
+            marginTop: 4
+          }}
+        />
       </div>
 
-      <div>
-        <label>Notas</label><br />
-        <textarea name="notas" value={form.notas} onChange={handleChange} rows={3} />
+      <div style={{ marginBottom: "1rem" }}>
+        <label style={{ color: "var(--texto-secundario)", fontSize: 13 }}>Notas</label><br />
+        <textarea
+          name="notas"
+          value={form.notas}
+          onChange={handleChange}
+          rows={3}
+          placeholder="Observaciones de la sesion..."
+          style={{
+            width: "100%",
+            padding: "8px",
+            borderRadius: 6,
+            border: "1px solid var(--borde)",
+            backgroundColor: "var(--bg)",
+            color: "var(--texto)",
+            marginTop: 4,
+            resize: "vertical"
+          }}
+        />
       </div>
 
-      <div>
-        <label>Duración (min)</label><br />
-        <input type="number" name="duracion"
-          value={form.atributos.duracion} onChange={handleAtributos} />
-      </div>
-
-      <div>
-        <label>Series</label><br />
-        <input type="number" name="series"
-          value={form.atributos.series} onChange={handleAtributos} />
-      </div>
-
-      <div>
-        <label>
-          <input type="checkbox" name="activo"
-            checked={form.activo} onChange={handleChange} />
-          {" "}Activo
+      <div style={{ marginBottom: "1rem" }}>
+        <label style={{ color: "var(--texto)", fontSize: 14 }}>
+          <input
+            type="checkbox"
+            name="activo"
+            checked={form.activo}
+            onChange={handleChange}
+            style={{ marginRight: 8 }}
+          />
+          Activo
         </label>
       </div>
 
-      <button type="submit">Agregar Sesión</button>
+      <button
+        type="submit"
+        style={{
+          backgroundColor: "var(--acento)",
+          color: "#fff",
+          border: "none",
+          padding: "10px 24px",
+          borderRadius: 6,
+          cursor: "pointer",
+          fontSize: 15,
+          fontWeight: 600
+        }}
+      >
+        Agregar Sesion
+      </button>
     </form>
   );
 }
