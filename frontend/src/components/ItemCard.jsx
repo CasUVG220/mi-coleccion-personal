@@ -229,7 +229,7 @@ function ItemCard({ sesion, onEliminar, onEditar }) {
     <div style={{
       backgroundColor: "var(--bg-card)",
       border: `1px solid var(--borde)`,
-      borderLeft: `4px solid ${categoria.color}`,
+      borderLeft: `1px solid var(--borde)`,
       borderRadius: 10,
       padding: "1.25rem",
       marginBottom: "1rem",
