@@ -1,5 +1,5 @@
 // src/components/ItemCard.jsx
-import { useState } from "react";
+import React, { useState } from "react";
 import { CATEGORIAS, getCategoriaById } from "../utils/categorias";
 
 function ItemCard({ sesion, onEliminar, onEditar }) {
@@ -311,4 +311,4 @@ function ItemCard({ sesion, onEliminar, onEditar }) {
   );
 }
 
-export default ItemCard;
+export default React.memo(ItemCard);

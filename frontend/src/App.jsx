@@ -1,35 +1,34 @@
 // src/App.jsx
-import { useState, useEffect, useRef } from "react";
+import { useReducer, useEffect, useRef, useMemo, useCallback } from "react";
 import { StorageProvider } from "./context/StorageContext";
 import { ThemeProvider, useTema } from "./context/ThemeContext";
 import { UserProvider, useUser } from "./context/UserContext";
+import { useStorage } from "./context/StorageContext";
+import { itemsReducer, estadoInicial } from "./reducers/itemsReducer";
 import FormularioItem from "./components/FormularioItem";
 import ListaItems from "./components/ListaItems";
-import { useStorage } from "./context/StorageContext";
+import Dashboard from "./components/Dashboard";
 
 function AppContenido() {
   const { modo, setModo, obtenerItems, guardarItem, eliminarItem } = useStorage();
   const { tema, toggleTema } = useTema();
-  const { nombre, setNombre, preferencias } = useUser();
-  const [sesiones, setSesiones] = useState([]);
-  const [editandoNombre, setEditandoNombre] = useState(false);
+  const { nombre, setNombre } = useUser();
+  const [state, dispatch] = useReducer(itemsReducer, estadoInicial);
+  const [editandoNombre, setEditandoNombre] = useReducer(
+    (s, a) => a,
+    false
+  );
 
-  // useRef #1 — focus en input del formulario tras agregar
   const inputRef = useRef(null);
-
-  // useRef #2 — ID del intervalo de auto-refresh en modo API
   const intervaloRef = useRef(null);
 
   useEffect(() => {
     cargar();
   }, [modo]);
 
-  // Auto-refresh cada 30s en modo API
   useEffect(() => {
     if (modo === "api") {
-      intervaloRef.current = setInterval(() => {
-        cargar();
-      }, 30000);
+      intervaloRef.current = setInterval(cargar, 30000);
     }
     return () => {
       if (intervaloRef.current) clearInterval(intervaloRef.current);
@@ -38,29 +37,51 @@ function AppContenido() {
 
   async function cargar() {
     const items = await obtenerItems();
-    // Filtrar inactivos según preferencia
-    const filtrados = preferencias.mostrarInactivos
-      ? items
-      : items.filter((s) => s.activo);
-    setSesiones(filtrados);
+    dispatch({ type: "HIDRATAR", payload: items });
   }
 
-  async function agregarSesion(nueva) {
+  // useCallback — handlers memoizados
+  const agregarSesion = useCallback(async (nueva) => {
     await guardarItem(nueva);
-    await cargar();
-    // useRef #1 — focus automático tras agregar
+    const items = await obtenerItems();
+    dispatch({ type: "HIDRATAR", payload: items });
     if (inputRef.current) inputRef.current.focus();
-  }
+  }, [guardarItem, obtenerItems]);
 
-  async function editarSesion(actualizada) {
+  const editarSesion = useCallback(async (actualizada) => {
     await guardarItem(actualizada);
-    await cargar();
-  }
+    const items = await obtenerItems();
+    dispatch({ type: "HIDRATAR", payload: items });
+  }, [guardarItem, obtenerItems]);
 
-  async function eliminarSesion(id) {
+  const eliminarSesion = useCallback(async (id) => {
     await eliminarItem(id);
-    await cargar();
-  }
+    dispatch({ type: "ELIMINAR", payload: id });
+  }, [eliminarItem]);
+
+  const cambiarEstado = useCallback((id, estado) => {
+    dispatch({ type: "CAMBIAR_ESTADO", payload: { id, estado } });
+  }, []);
+
+  // useMemo — lista filtrada
+  const sesionesFiltradas = useMemo(() => {
+    return state.lista.filter((s) => {
+      const porCategoria = state.filtroCategoria === "todas" || s.categoriaId === state.filtroCategoria;
+      const porEstado = state.filtroEstado === "todos" || s.estado === state.filtroEstado;
+      const porBusqueda = s.nombre.toLowerCase().includes(state.busqueda.toLowerCase());
+      return porCategoria && porEstado && porBusqueda;
+    });
+  }, [state.lista, state.filtroCategoria, state.filtroEstado, state.busqueda]);
+
+  // useMemo — estadísticas
+  const estadisticas = useMemo(() => {
+    const total = state.lista.length;
+    const completadas = state.lista.filter((s) => s.estado === "completado").length;
+    const promedioPuntuacion = total > 0
+      ? (state.lista.reduce((acc, s) => acc + Number(s.puntuacion), 0) / total).toFixed(1)
+      : 0;
+    return { total, completadas, promedioPuntuacion };
+  }, [state.lista]);
 
   return (
     <div style={{
@@ -70,7 +91,6 @@ function AppContenido() {
       padding: "2rem",
       transition: "all 0.3s ease"
     }}>
-
       {/* Header */}
       <div style={{
         display: "flex",
@@ -101,11 +121,7 @@ function AppContenido() {
                 }}
               />
             ) : (
-              <span
-                onClick={() => setEditandoNombre(true)}
-                style={{ cursor: "pointer" }}
-                title="Clic para editar tu nombre"
-              >
+              <span onClick={() => setEditandoNombre(true)} style={{ cursor: "pointer" }}>
                 {nombre ? `Hola, ${nombre}` : "Clic para agregar tu nombre"}
               </span>
             )}
@@ -113,7 +129,6 @@ function AppContenido() {
         </div>
 
         <div style={{ display: "flex", gap: "1rem", alignItems: "center" }}>
-          {/* Toggle modo */}
           <label style={{ fontSize: 14, color: "var(--texto-secundario)" }}>
             Modo:&nbsp;
             <select
@@ -132,7 +147,6 @@ function AppContenido() {
             </select>
           </label>
 
-          {/* Toggle tema */}
           <button
             onClick={toggleTema}
             title="Atajo: T"
@@ -150,11 +164,114 @@ function AppContenido() {
         </div>
       </div>
 
+      {/* Estadísticas rápidas */}
+      <div style={{
+        display: "grid",
+        gridTemplateColumns: "repeat(3, 1fr)",
+        gap: "1rem",
+        marginBottom: "2rem"
+      }}>
+        {[
+          { label: "Total sesiones", valor: estadisticas.total },
+          { label: "Completadas", valor: estadisticas.completadas },
+          { label: "Puntuacion promedio", valor: estadisticas.promedioPuntuacion },
+        ].map((stat) => (
+          <div key={stat.label} style={{
+            backgroundColor: "var(--bg-card)",
+            border: "1px solid var(--borde)",
+            borderRadius: 10,
+            padding: "1rem",
+            textAlign: "center"
+          }}>
+            <div style={{ fontSize: 28, fontWeight: 700, color: "var(--acento)" }}>{stat.valor}</div>
+            <div style={{ fontSize: 13, color: "var(--texto-secundario)" }}>{stat.label}</div>
+          </div>
+        ))}
+      </div>
+
+      {/* Filtros */}
+      <div style={{
+        backgroundColor: "var(--bg-card)",
+        border: "1px solid var(--borde)",
+        borderRadius: 10,
+        padding: "1rem",
+        marginBottom: "2rem",
+        display: "flex",
+        gap: "1rem",
+        flexWrap: "wrap",
+        alignItems: "center"
+      }}>
+        <input
+          placeholder="Buscar sesion..."
+          value={state.busqueda}
+          onChange={(e) => dispatch({ type: "FILTRAR", payload: { campo: "busqueda", valor: e.target.value } })}
+          style={{
+            flex: 1,
+            minWidth: 160,
+            padding: "8px",
+            borderRadius: 6,
+            border: "1px solid var(--borde)",
+            backgroundColor: "var(--bg)",
+            color: "var(--texto)"
+          }}
+        />
+        <select
+          value={state.filtroCategoria}
+          onChange={(e) => dispatch({ type: "FILTRAR", payload: { campo: "filtroCategoria", valor: e.target.value } })}
+          style={{
+            padding: "8px",
+            borderRadius: 6,
+            border: "1px solid var(--borde)",
+            backgroundColor: "var(--bg)",
+            color: "var(--texto)"
+          }}
+        >
+          <option value="todas">Todas las categorias</option>
+          <option value="fuerza">Fuerza</option>
+          <option value="cardio">Cardio</option>
+          <option value="hiit">HIIT</option>
+          <option value="flexibilidad">Flexibilidad</option>
+          <option value="descanso">Descanso</option>
+        </select>
+        <select
+          value={state.filtroEstado}
+          onChange={(e) => dispatch({ type: "FILTRAR", payload: { campo: "filtroEstado", valor: e.target.value } })}
+          style={{
+            padding: "8px",
+            borderRadius: 6,
+            border: "1px solid var(--borde)",
+            backgroundColor: "var(--bg)",
+            color: "var(--texto)"
+          }}
+        >
+          <option value="todos">Todos los estados</option>
+          <option value="pendiente">Pendiente</option>
+          <option value="completado">Completado</option>
+          <option value="cancelado">Cancelado</option>
+        </select>
+        <button
+          onClick={() => dispatch({ type: "LIMPIAR_FILTROS" })}
+          style={{
+            backgroundColor: "var(--bg)",
+            color: "var(--texto-secundario)",
+            border: "1px solid var(--borde)",
+            padding: "8px 14px",
+            borderRadius: 6,
+            cursor: "pointer"
+          }}
+        >
+          Limpiar
+        </button>
+      </div>
+
+      <Dashboard sesiones={state.lista} />
+
       <FormularioItem onAgregar={agregarSesion} inputRef={inputRef} />
       <ListaItems
-        sesiones={sesiones}
+        sesiones={sesionesFiltradas}
         onEliminar={eliminarSesion}
         onEditar={editarSesion}
+        onCambiarEstado={cambiarEstado}
       />
     </div>
   );
