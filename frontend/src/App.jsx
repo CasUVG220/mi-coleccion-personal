@@ -1,4 +1,7 @@
 // src/App.jsx
+import useLocalStorage from "./hooks/useLocalStorage";
+import useAtajoTeclado from "./hooks/useAtajoTeclado";
+import useRacha from "./hooks/useRacha";
 import { useReducer, useEffect, useRef, useMemo, useCallback } from "react";
 import { StorageProvider } from "./context/StorageContext";
 import { ThemeProvider, useTema } from "./context/ThemeContext";
