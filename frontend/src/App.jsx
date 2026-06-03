@@ -1,7 +1,4 @@
 // src/App.jsx
-import useLocalStorage from "./hooks/useLocalStorage";
-import useAtajoTeclado from "./hooks/useAtajoTeclado";
-import useRacha from "./hooks/useRacha";
 import { useReducer, useEffect, useRef, useMemo, useCallback } from "react";
 import { StorageProvider } from "./context/StorageContext";
 import { ThemeProvider, useTema } from "./context/ThemeContext";
@@ -11,20 +8,15 @@ import { itemsReducer, estadoInicial } from "./reducers/itemsReducer";
 import FormularioItem from "./components/FormularioItem";
 import ListaItems from "./components/ListaItems";
 import Dashboard from "./components/Dashboard";
+import useAtajoTeclado from "./hooks/useAtajoTeclado";
+import useRacha from "./hooks/useRacha";
 
 function AppContenido() {
   const { modo, setModo, obtenerItems, guardarItem, eliminarItem } = useStorage();
   const { tema, toggleTema } = useTema();
-  const racha = useRacha(state.lista);
-  useAtajoTeclado("ctrl+k", () => {
-    if (inputRef.current) inputRef.current.focus();
-  });
   const { nombre, setNombre } = useUser();
   const [state, dispatch] = useReducer(itemsReducer, estadoInicial);
-  const [editandoNombre, setEditandoNombre] = useReducer(
-    (s, a) => a,
-    false
-  );
+  const [editandoNombre, setEditandoNombre] = useReducer((s, a) => a, false);
 
   const inputRef = useRef(null);
   const intervaloRef = useRef(null);
@@ -47,7 +39,6 @@ function AppContenido() {
     dispatch({ type: "HIDRATAR", payload: items });
   }
 
-  // useCallback — handlers memoizados
   const agregarSesion = useCallback(async (nueva) => {
     await guardarItem(nueva);
     const items = await obtenerItems();
@@ -70,7 +61,13 @@ function AppContenido() {
     dispatch({ type: "CAMBIAR_ESTADO", payload: { id, estado } });
   }, []);
 
-  // useMemo — lista filtrada
+  const racha = useRacha(state.lista);
+
+  const atajoPorRef = useCallback(() => {
+    if (inputRef.current) inputRef.current.focus();
+  }, []);
+  useAtajoTeclado("ctrl+k", atajoPorRef);
+
   const sesionesFiltradas = useMemo(() => {
     return state.lista.filter((s) => {
       const porCategoria = state.filtroCategoria === "todas" || s.categoriaId === state.filtroCategoria;
@@ -80,7 +77,6 @@ function AppContenido() {
     });
   }, [state.lista, state.filtroCategoria, state.filtroEstado, state.busqueda]);
 
-  // useMemo — estadísticas
   const estadisticas = useMemo(() => {
     const total = state.lista.length;
     const completadas = state.lista.filter((s) => s.estado === "completado").length;
@@ -109,7 +105,7 @@ function AppContenido() {
       }}>
         <div>
           <h1 style={{ margin: 0 }}>Bitacora de Entrenamiento</h1>
-          <div style={{ marginTop: 4, fontSize: 14, color: "var(--texto-secundario)" }}>
+          <div style={{ marginTop: 4, fontSize: 14, color: "var(--texto-secundario)", display: "flex", gap: "1rem", alignItems: "center" }}>
             {editandoNombre ? (
               <input
                 autoFocus
@@ -130,6 +126,18 @@ function AppContenido() {
             ) : (
               <span onClick={() => setEditandoNombre(true)} style={{ cursor: "pointer" }}>
                 {nombre ? `Hola, ${nombre}` : "Clic para agregar tu nombre"}
+              </span>
+            )}
+            {racha > 1 && (
+              <span style={{
+                backgroundColor: "var(--acento)",
+                color: "#fff",
+                fontSize: 12,
+                fontWeight: 600,
+                padding: "2px 10px",
+                borderRadius: 20
+              }}>
+                {racha} dias seguidos
               </span>
             )}
           </div>
