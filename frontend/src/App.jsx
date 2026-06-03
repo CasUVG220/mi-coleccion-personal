@@ -15,6 +15,10 @@ import Dashboard from "./components/Dashboard";
 function AppContenido() {
   const { modo, setModo, obtenerItems, guardarItem, eliminarItem } = useStorage();
   const { tema, toggleTema } = useTema();
+  const racha = useRacha(state.lista);
+  useAtajoTeclado("ctrl+k", () => {
+    if (inputRef.current) inputRef.current.focus();
+  });
   const { nombre, setNombre } = useUser();
   const [state, dispatch] = useReducer(itemsReducer, estadoInicial);
   const [editandoNombre, setEditandoNombre] = useReducer(
